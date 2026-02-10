@@ -1,11 +1,16 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Deploy de infraestrutura VoIP: 2 instâncias vSBC (Master/Spare) em Cluster'
+Description: 'vSBC Deploy: 2x vSBC'
 
 Parameters:
   AMIimageID:
     Type: String
     Default: 'ami-0828bad61a1e89d72'
     Description: 'vsbc-w-082025'
+
+  VPCID:
+    Type: String
+    Default: 'vpc-0bded65f183bc277a'
+    Description: 'Flow-MGT-vpc'
 
   SubnetID:
     Type: String
