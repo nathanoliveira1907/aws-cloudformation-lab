@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Deploy Single EC2: Debian 11 com infraestrutura completa do zero'
+
+Parameters:
+  # AMI do Debian 11 na região us-east-1 (Verifique se é a versão atualizada)
+  AMIimageID:
+    Type: String
+    Default: 'ami-0504791e878531771' 
+    Description: 'Debian 11 bullseye - us-east-1'
+
+Resources:
+  # 1. Rede Lógica (VPC)
+  NovaVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: VPC-Nova-Debian
+
+  # 2. Gateway de Internet (Necessário para o Auto-Assign Public IP funcionar)
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  VPCGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref NovaVPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # 3. Subnet com Auto-Assign Public IP Habilitado
+  NovaSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref NovaVPC
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true # Esta linha habilita o Auto-Assign Public IP
+      Tags:
+        - Key: Name
+          Value: Subnet-Debian-Publica
+
+  # 4. Tabela de Rotas para Internet
+  RotaPublica:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref NovaVPC
+
+  RotaParaInternet:
+    Type: AWS::EC2::Route
+    DependsOn: VPCGatewayAttachment
+    Properties:
+      RouteTableId: !Ref RotaPublica
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  SubnetRouteTableAssoc:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref NovaSubnet
+      RouteTableId: !Ref RotaPublica
+
+  # 5. Security Group com portas 22, 80 e 443 liberadas
+  NovoSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'Liberar SSH (22), HTTP (80) e HTTPS (443)'
+      VpcId: !Ref NovaVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  # 6. Instância EC2 Debian 11
+  ServidorDebian:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: t2.medium
+      ImageId: !Ref AMIimageID
+      SubnetId: !Ref NovaSubnet
+      SecurityGroupIds: 
+        - !Ref NovoSecurityGroup
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp3
+      Tags:
+        - Key: Name
+          Value: EC2-Debian11-Lab
+
+Outputs:
+  IPPublico:
+    Description: 'IP Público gerado automaticamente'
+    Value: !GetAtt ServidorDebian.PublicIp
+  VpcCriada:
+    Value: !Ref NovaVPC
