@@ -58,10 +58,10 @@ Navegue até a pasta do projeto e execute:
 
 Quais ações durante o processo?
 
-Validação: A AWS verifica a sintaxe do arquivo template.yaml.
-Criação de EC2: Duas instâncias c5.large são iniciadas simultaneamente na VPC informada.
-Reserva de EIP: Dois Elastic IPs (IPs fixos públicos) são reservados.
-Associação: O CloudFormation vincula cada IP à sua respectiva instância assim que elas atingem o estado running.
+- Validação: A AWS verifica a sintaxe do arquivo template.yaml.
+- Criação de EC2: Duas instâncias c5.large são iniciadas simultaneamente na VPC informada.
+- Reserva de EIP: Dois Elastic IPs (IPs fixos públicos) são reservados.
+- Associação: O CloudFormation vincula cada IP à sua respectiva instância assim que elas atingem o estado running.
 
 ## 🧹 Limpeza de Recursos
 Concluído o Lab e os testes, para evitar cobranças indesejadas, delete a stack completa:
